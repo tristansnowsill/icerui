@@ -1,0 +1,21 @@
+Package: icerui
+Type: Package
+Title: Calculate Uncertainty Intervals for Incremental Cost-Effectiveness Ratios (ICERs)
+Version: 0.1.0
+Authors@R: person("Tristan", "Snowsill", email = "tristan.snowsill@googlemail.com",
+    role = c("aut", "cre"))
+Description: This package provides several methods for calculating uncertainty
+    intervals (confidence intervals, credible intervals) for the incremental
+    cost-effectiveness ratio (ICER), which is the ratio of incremental costs
+    to incremental effects. It includes the bootstrap percentile method,
+    Fieller method and bootstrap acceptability method.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    BCEA (>= 2.3.1.1)
+RoxygenNote: 7.1.0
+Depends: 
+    R (>= 2.10)
+Suggests: 
+    ggplot2 (>= 3.3.1)
