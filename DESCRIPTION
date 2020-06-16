@@ -1,7 +1,7 @@
 Package: icerui
 Type: Package
 Title: Calculate Uncertainty Intervals for Incremental Cost-Effectiveness Ratios (ICERs)
-Version: 0.1.1
+Version: 0.1.1.1
 Authors@R: person("Tristan", "Snowsill", email = "tristan.snowsill@googlemail.com",
     role = c("aut", "cre"))
 Description: This package provides several methods for calculating uncertainty

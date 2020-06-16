@@ -13,9 +13,13 @@ cost-effectiveness ratio (ICER), which is the ratio of incremental costs
 to incremental effects. It includes the bootstrap percentile method,
 Fieller method and bootstrap acceptability method.
 
+> :warning: **Early stages of development.** This package is in the
+> early stages of development. Please do not assume there will be no
+> breaking changes and check back regularly.
+
 ## Installation
 
-You can install the development version from
+You can install the latest “stable” version from
 [GitHub](https://github.com/) with:
 
 ``` r
