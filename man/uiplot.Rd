@@ -5,7 +5,9 @@
 \title{Cost-effectiveness scatter plot with confidence intervals}
 \usage{
 uiplot(
-  object,
+  delta.e = NULL,
+  delta.c = NULL,
+  object = NULL,
   level = 0.95,
   method = c("fieller", "percentile", "acceptability"),
   comparison = NULL,
@@ -14,19 +16,28 @@ uiplot(
 )
 }
 \arguments{
-\item{object}{A BCEA object.}
+\item{delta.e}{A vector of incremental effects.}
+
+\item{delta.c}{A vector of incremental costs.}
+
+\item{object}{A \code{bcea} or \code{psa} object.}
 
 \item{level}{The confidence level required.}
 
 \item{method}{The method to be used to calculate the uncertainty interval
-(see Details).}
+(see \link{icerui}).}
 
-\item{comparison}{Select one comparator.}
+\item{comparison}{Select one comparator (by index or name if \code{object}
+is a \code{bcea} object, or by name if \code{object} is a \code{psa}
+object).}
 
 \item{graph}{Specify the graphics engine to use.}
 
 \item{...}{Additional argument(s) for methods.}
 }
 \description{
-Cost-effectiveness scatter plot with confidence intervals
+Produces a scatter plot with incremental effects on the x-axis and
+incremental costs on the y-axis, accompanied by the confidence intervals
+produced by the selected method. Can use base or ggplot2 graphics (if
+installed).
 }

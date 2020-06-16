@@ -12,10 +12,10 @@ Description: This package provides several methods for calculating uncertainty
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: 
-    BCEA (>= 2.3.1.1)
 RoxygenNote: 7.1.0
 Depends: 
     R (>= 2.10)
 Suggests: 
-    ggplot2 (>= 3.3.1)
+    ggplot2 (>= 3.3.1),
+    BCEA (>= 2.3.1),
+    heemod (>= 0.12.0)
