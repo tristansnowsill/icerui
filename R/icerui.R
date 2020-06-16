@@ -129,7 +129,7 @@ bspercent <- function(delta.e, delta.c, level) {
   mu_e         <- mean(delta.e)
   mu_c         <- mean(delta.c)
   angle_origin <- atan2(-mu_c, -mu_e)
-  rel_angles   <- atan2(delta.c, delta.e) - angle_origin
+  rel_angles   <- (atan2(delta.c, delta.e) - angle_origin) %% (2 * pi)
   ord          <- order(rel_angles)
   icers        <- (delta.c / delta.e)[ord]
   # Compute Type 7 quantiles
