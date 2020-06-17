@@ -181,6 +181,83 @@ uiplot <- function(object = NULL, delta.e = NULL, delta.c = NULL, level = 0.95,
   }
 }
 
+extract_comparison.bcea <- function(object, comparison) {
+  # If there is only one comparison this will return a single_comparison
+  # object. If there is more than one comparison it will return a
+  # multiple_comparison object.
+
+  # Check what type of comparison object has been provided and delegate
+  stopifnot(inherits(object, "bcea"))
+
+  if (is.numeric(comparison)) {
+    extract_comparison_index.bcea(object, comparison)
+  } else if (is.character(comparison)) {
+    extract_comparison_names.bcea(object, comparison)
+  } else if (rlang::is_formula(comparison)) {
+    extract_comparison_formula.bcea(object, comparison)
+  }
+}
+
+extract_comparison_index.bcea <- function(object, comparison) {
+  res <- NULL
+  if (length(comparison) > 1) {
+    res <- lapply(comparison, function(i) {
+      reindex <- which(object$comp == i)
+      list(delta.e = object$delta.e[, reindex, drop = TRUE],
+           delta.c = object$delta.c[, reindex, drop = TRUE])
+    })
+    class(res) <- "multiple_comparison"
+  } else {
+    res <- list(delta.e = object$delta.e[, reindex, drop = TRUE],
+                delta.c = object$delta.c[, reindex, drop = TRUE])
+    class(res) <- "single_comparison"
+  }
+  res
+}
+
+extract_comparison_names.bcea <- function(object, comparison) {
+  comparison <- sapply(comparison,
+                       function(x) which(object$interventions[object$comp] == x))
+  extract_comparison_index.bcea(object, comparison)
+}
+
+extract_comparison_formula.bcea <- function(object, comparison) {
+  # Check we have a single intervention on LHS and retrieve costs and effects
+  stopifnot(rlang::is_symbol(lhs <- rlang::f_lhs(comparison)))
+  intervention <- rlang::as_string(lhs)
+  stopifnot(intervention %in% object$interventions)
+  int_e <- object$e[, which(object$interventions == intervention)]
+  int_c <- object$c[, which(object$interventions == intervention)]
+
+  res <- NULL
+
+  # Check whether RHS is single or multiple comparators
+  if (length(rhs <- rlang::f_rhs(comparison)) > 1) {
+    # Retrieve costs and effects for multiple comparators
+    stopifnot("multiple comparators must be specified as list(comp1, comp2, ...)" = rhs[[1]] == "list")
+    comp_e <- lapply(rhs[2:length(rhs)], function(s) {
+      stopifnot(rlang::is_symbol(s))
+      s_str <- rlang::as_string(s)
+      stopifnot(s_str %in% object$interventions)
+      object$e[, which(object$interventions == s_str)]
+    })
+    comp_c <- lapply(rhs[2:length(rhs)],
+                     function(s) object$c[, which(object$interventions == rlang::as_string(s))])
+    res <- mapply(function(ce, cc) list(delta.e = int_e - ce, delta.c = int_c - cc),
+                  comp_e, comp_c, SIMPLIFY = FALSE)
+    class(res) <- "multiple_comparison"
+  } else {
+    stopifnot(rlang::is_symbol(rhs))
+    s_str <- rlang::as_string(rhs)
+    stopifnot(s_str %in% object$interventions)
+    res <- list(delta.e = int_e - object$e[, which(object$interventions == s_str)],
+                delta.c = int_c - object$c[, which(object$interventions == s_str)])
+    class(res) <- "single_comparison"
+  }
+
+  res
+}
+
 fieller <- function(delta.e, delta.c, level) {
   mu_e <- mean(delta.e)
   mu_c <- mean(delta.c)
