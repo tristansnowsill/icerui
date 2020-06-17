@@ -181,6 +181,10 @@ uiplot <- function(object = NULL, delta.e = NULL, delta.c = NULL, level = 0.95,
   }
 }
 
+compute_intervals.multiple_comparison <- function(comparison, bcea) {
+
+}
+
 extract_comparison.bcea <- function(object, comparison) {
   # If there is only one comparison this will return a single_comparison
   # object. If there is more than one comparison it will return a
@@ -204,12 +208,19 @@ extract_comparison_index.bcea <- function(object, comparison) {
     res <- lapply(comparison, function(i) {
       reindex <- which(object$comp == i)
       list(delta.e = object$delta.e[, reindex, drop = TRUE],
-           delta.c = object$delta.c[, reindex, drop = TRUE])
+           delta.c = object$delta.c[, reindex, drop = TRUE],
+           comparison = paste(object$interventions[object$ref],
+                              "vs.",
+                              object$interventions[i]))
     })
     class(res) <- "multiple_comparison"
   } else {
+    reindex <- which(object$comp == comparison)
     res <- list(delta.e = object$delta.e[, reindex, drop = TRUE],
-                delta.c = object$delta.c[, reindex, drop = TRUE])
+                delta.c = object$delta.c[, reindex, drop = TRUE],
+                comparison = paste(object$interventions[object$ref],
+                                   "vs.",
+                                   object$interventions[comparison]))
     class(res) <- "single_comparison"
   }
   res
@@ -243,15 +254,22 @@ extract_comparison_formula.bcea <- function(object, comparison) {
     })
     comp_c <- lapply(rhs[2:length(rhs)],
                      function(s) object$c[, which(object$interventions == rlang::as_string(s))])
-    res <- mapply(function(ce, cc) list(delta.e = int_e - ce, delta.c = int_c - cc),
-                  comp_e, comp_c, SIMPLIFY = FALSE)
+    comp_names <- lapply(rhs[2:length(rhs)], rlang::as_string)
+    res <- mapply(function(ce, cc, name)
+      list(delta.e = int_e - ce,
+           delta.c = int_c - cc,
+           comparison = paste(intervention,
+                              "vs.",
+                              name)),
+      comp_e, comp_c, comp_names, SIMPLIFY = FALSE)
     class(res) <- "multiple_comparison"
   } else {
     stopifnot(rlang::is_symbol(rhs))
     s_str <- rlang::as_string(rhs)
     stopifnot(s_str %in% object$interventions)
     res <- list(delta.e = int_e - object$e[, which(object$interventions == s_str)],
-                delta.c = int_c - object$c[, which(object$interventions == s_str)])
+                delta.c = int_c - object$c[, which(object$interventions == s_str)],
+                comparison = paste(intervention, "vs.", s_str))
     class(res) <- "single_comparison"
   }
 
