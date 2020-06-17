@@ -62,24 +62,12 @@ confint.bcea <- function(object, parm = "ICER", level = 0.95,
                 fieller       = fieller,
                 percentile    = bspercent,
                 acceptability = bsaccept)
-  if (length(comparison) > 1) {
-    inner <- function(index, fun) {
-      reindex <- which(object$comp == index)
-      fun(object$delta.e[, reindex], object$delta.c[, reindex], level)
-    }
-    res <- t(sapply(comparison, inner, fun = fun))
-    rownames(res) <- object$interventions[comparison]
-    colnames(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
+  comparison <- extract_comparison.bcea(object, comparison)
+  if (inherits(comparison, "multiple_comparison")) {
+    compute_interval.multiple_comparison(comparison, fun, level)
   } else {
-    if (object$n.comparisons > 1) {
-      reindex <- which(object$comp == comparison)
-      res <- fun(object$delta.e[, reindex], object$delta.c[, reindex], level)
-    } else {
-      res <- fun(object$delta.e, object$delta.c, level)
-    }
-    names(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
+    compute_interval.single_comparison(comparison, fun, level)
   }
-  res
 }
 
 #' @describeIn icerui Calculate the ICER uncertainty interval for a heemod PSA
@@ -181,8 +169,23 @@ uiplot <- function(object = NULL, delta.e = NULL, delta.c = NULL, level = 0.95,
   }
 }
 
-compute_intervals.multiple_comparison <- function(comparison, bcea) {
+compute_interval.multiple_comparison <- function(comparison, fun, level) {
+  stopifnot(inherits(comparison, "multiple_comparison"))
 
+  res <- t(sapply(comparison, function(c) fun(c$delta.e, c$delta.c, level)))
+  rownames(res) <- sapply(comparison, function(c) c$comparison)
+  colnames(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
+
+  res
+}
+
+compute_interval.single_comparison <- function(comparison, fun, level) {
+  stopifnot(inherits(comparison, "single_comparison"))
+
+  res <- fun(comparison$delta.e, comparison$delta.c, level)
+  names(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
+
+  res
 }
 
 extract_comparison.bcea <- function(object, comparison) {

@@ -5,9 +5,9 @@
 \title{Cost-effectiveness scatter plot with confidence intervals}
 \usage{
 uiplot(
+  object = NULL,
   delta.e = NULL,
   delta.c = NULL,
-  object = NULL,
   level = 0.95,
   method = c("fieller", "percentile", "acceptability"),
   comparison = NULL,
@@ -16,11 +16,11 @@ uiplot(
 )
 }
 \arguments{
+\item{object}{A \code{bcea} or \code{psa} object.}
+
 \item{delta.e}{A vector of incremental effects.}
 
 \item{delta.c}{A vector of incremental costs.}
-
-\item{object}{A \code{bcea} or \code{psa} object.}
 
 \item{level}{The confidence level required.}
 
