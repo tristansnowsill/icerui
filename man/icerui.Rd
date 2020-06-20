@@ -7,10 +7,10 @@
 \title{Calculate ICER uncertainty intervals}
 \usage{
 icerui(
-  delta.e,
-  delta.c,
+  x,
   level = 0.95,
   method = c("fieller", "percentile", "acceptability"),
+  comparison = NULL,
   ...
 )
 
@@ -33,13 +33,20 @@ icerui(
 )
 }
 \arguments{
-\item{delta.e}{Vector of incremental effects.}
-
-\item{delta.c}{Vector of incremental costs.}
+\item{x}{The results of a call to \code{BCEA::bcea()},
+\code{heemod::run_psa}, or a list with elements
+\code{delta.e} and \code{delta.c}.}
 
 \item{level}{The confidence level required.}
 
 \item{method}{The method to be used to calculate the uncertainty interval.}
+
+\item{comparison}{Selects the comparator, in case of more than two
+interventions being analysed. Uncertainty intervals will be
+produced for each versus \code{object$ref}
+(\code{confint.bcea}) or versus the first defined strategy
+(\code{confint.psa}). Default (NULL) results in uncertainty
+intervals being produced for all interventions.}
 
 \item{...}{Additional argument(s) for methods.}
 
@@ -48,19 +55,6 @@ command; for \code{confint.psa}, the result of a \code{heemod::run_psa()}
 command.}
 
 \item{parm}{Should not change from "ICER" (the default).}
-
-\item{comparison}{Selects the comparator, in case of more than two
-interventions being analysed. Uncertainty intervals will be
-produced for each versus \code{object$ref}
-(\code{confint.bcea}) or versus the first defined strategy
-(\code{confint.psa}). Default (NULL) results in uncertainty
-intervals being produced for all interventions.}
-}
-\value{
-A matrix or vector with columns giving lower and upper
-               confidence limits for the ICER and each row giving details
-               for an intervention. These will be labelled as (1-level)/2
-               and 1 - (1-level)/2 in \% (by default 2.5\% and 97.5\%).
 }
 \description{
 Calculate uncertainty intervals for the incremental cost-effectiveness
