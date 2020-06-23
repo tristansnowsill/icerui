@@ -36,10 +36,12 @@ icerui(y, comparison = list(trtC, trtB, trtA) ~ .)
 ```
 
 For BCEA and heemod PSA objects you can also specify comparisons with character vectors, but the behaviour is dependent on whether the input is a BCEA object or heemod PSA object:
-* For BCEA objects, bcea$ref will be compared to each option in the character vector
-* For heemod PSA objects, each strategy listed will be compared to psa$model$central_strategy
+* For BCEA objects, `bcea$ref` will be compared to each option in the character vector
+* For heemod PSA objects, each strategy listed will be compared to `psa$model$central_strategy`
 
 For BCEA objects you can also specify comparisons by integers instead of strings.
+
+For BCEA and heemod PSA objects if you do not specify a comparison, it will behave as if you asked for all comparisons (`bcea$ref` vs. each in `bcea$comp` or all strategies versus `psa$model$central_strategy`)
 
 ## Other changes
 
