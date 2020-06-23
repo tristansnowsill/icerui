@@ -14,6 +14,6 @@ An object of class \code{bcea} of length 24.
 ex_smoking
 }
 \description{
-An object of class \code{bcea} derived from the dataset \link{Smoking}
+An object of class \code{bcea} derived from the dataset \link[BCEA:Smoking]{Smoking}
 }
 \keyword{datasets}

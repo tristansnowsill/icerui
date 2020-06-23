@@ -3,8 +3,7 @@
 \docType{data}
 \name{ex_simple}
 \alias{ex_simple}
-\title{Artificial BCEA object with two options generated from multivariate normal
-distribution using `MASS::mvrnorm`}
+\title{Simple example BCEA object}
 \format{
 An object of class \code{bcea} of length 24.
 }
@@ -12,9 +11,13 @@ An object of class \code{bcea} of length 24.
 ex_simple
 }
 \description{
+Artificial BCEA object with two options generated from multivariate normal
+distribution using `MASS::mvrnorm`
+}
+\details{
 The dataset is constructed such that the mean costs are 5000 and 10000
 and mean effects are 2.5 and 2.7. Incremental costs and effects have
 standard deviations 1000 * sqrt(3) and 0.2 and are negatively correlated
-(\eqn{rho = -0.2 * sqrt(3) \approx 0.3464}).
+(\eqn{\rho = -0.2 \sqrt 3} = 0.3464...).
 }
 \keyword{datasets}

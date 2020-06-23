@@ -4,10 +4,14 @@
 \alias{confint.icerui}
 \title{Output confidence intervals from an icerui object}
 \usage{
-\method{confint}{icerui}(x)
+\method{confint}{icerui}(object, parm = "ICER", level, ...)
 }
 \arguments{
-\item{x}{An \code{icerui} object.}
+\item{object}{An \code{icerui} object.}
+
+\item{parm}{Should not change from the default ("ICER")}
+
+\item{level}{Required confidence level.}
 }
 \value{
 A matrix or vector with columns giving lower and upper

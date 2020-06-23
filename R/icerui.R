@@ -35,27 +35,135 @@ icerui <- function(x, level = 0.95,
                 percentile    = bspercent,
                 acceptability = bsaccept)
 
-  comparison <- NULL
-  if (inherits(x, "bcea")) {
-    if (is.null(comparison)) comparison <- x$comp
-    comparison <- extract_comparison.bcea(x, comparison)
-  } else if (inherits(x, "run_psa")) {
-    comparison <- extract_comparison.run_psa(x, comparison)
-  } else if (all(c("delta.e", "delta.c") %in% names(x))) {
-
-  } else {
-    stop("could not construct appropriate comparison object")
-  }
+  comparison <- extract_comparison(x, comparison)
 
   interval <- compute_interval(comparison, fun, level)
 
   # res <- fun(delta.e, delta.c, level)
   # names(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
-  res
+  # interval
+
+  if (inherits(comparison, "multiple_comparison")) {
+    validate_icerui(
+      new_icerui(
+        comparison,
+        apply(interval, 1, function(i) list(interval = i, method = method, level = level) )))
+  } else {
+    validate_icerui(
+      new_icerui(
+        comparison,
+        list(list(interval = interval, method = method, level = level))))
+  }
+
 }
 
-new_icerui <- function(intervals) {
+new_icerui <- function(comparison, interval) {
+  if (inherits(comparison, "single_comparison")) {
+    structure(
+      list(comparison = comparison, interval = interval),
+      n.comparisons = 1,
+      class = "icerui"
+    )
+  } else if (inherits(comparison, "multiple_comparison")) {
+    structure(
+      list(comparison = comparison, interval = interval),
+      n.comparisons = length(comparison),
+      class = "icerui")
+  } else {
+    stop("cannot construct icerui object from ", comparison)
+  }
+}
 
+validate_icerui <- function(x) {
+  # TODO: Some validation
+
+  x
+}
+
+#' @export
+`[.icerui` <- function(x, i) {
+  stopifnot(i <= attr(x, "n.comparisons"))
+  if (attr(x, "n.comparisons") == 1) {
+    validate_icerui(new_icerui(x$comparison, x$interval[[1]]))
+  } else {
+    validate_icerui(new_icerui(x$comparison[[i]], x$interval[[i]]))
+  }
+}
+
+#' @export
+print.icerui <- function(x, ...) {
+  NextMethod()
+}
+
+#' @export
+plot.icerui <- function(x, comp = NULL, graph = c("base", "ggplot2"), ...) {
+  graph <- match.arg(graph)
+  if (is.null(comp)) comp <- 1:attr(x, "n.comparisons")
+  if (length(comp) > 1) {
+    plot_multiple_icerui(x, comp, graph, ...)
+  } else {
+    stopifnot(comp <= attr(x, "n.comparisons"))
+    plot_single_icerui(x[comp], graph, ...)
+  }
+}
+
+plot_multiple_icerui <- function(x, comp, graph, ...) {
+  if (graph == "base") {
+    n_tiles <- length(comp)
+    n_cols <- ceiling(sqrt(n_tiles))
+    n_rows <- ceiling(n_tiles / n_cols)
+    par(mfrow = c(n_rows, n_cols))
+    # cols <- ((0:(n_tiles - 1)) %% n_cols) + 1
+    # rows <- (1:n_tiles) - (rows * n_cols)
+    extents.e <- lapply(comp, function(c) {
+      c(min(x[c]$comparison$delta.e), max(x[c]$comparison$delta.e))
+    })
+    extents.e <- Reduce(function (accumulated, item) c(min(accumulated[1], item[1]), max(accumulated[2], item[2])), extents.e, c(0, 0))
+    extents.c <- lapply(comp, function(c) {
+      c(min(x[c]$comparison$delta.c), max(x[c]$comparison$delta.c))
+    })
+    extents.c <- Reduce(function (accumulated, item) c(min(accumulated[1], item[1]), max(accumulated[2], item[2])), extents.c, c(0, 0))
+    for (c in comp) {
+      graphics::plot(x[c]$comparison$delta.e, x[c]$comparison$delta.c,
+                     main = x[c]$comparison$comparison,
+                     xlim = extents.e,
+                     ylim = extents.c,
+                     xlab = "Incremental effectiveness",
+                     ylab = "Incremental costs")
+      if (!is.na(x[c]$interval$interval[1])) graphics::abline(a = 0, b = x[c]$interval$interval[1], lty = 2)
+      if (!is.na(x[c]$interval$interval[2])) graphics::abline(a = 0, b = x[c]$interval$interval[2], lty = 2)
+    }
+  } else if (graph == "ggplot2") {
+    if (requireNamespace("ggplot2", quietly = TRUE)) {
+
+    } else {
+      stop("please install ggplot2 or use graph = \"base\"")
+    }
+  } else {
+    stop("graph type ", graph, " not supported")
+  }
+}
+
+plot_single_icerui <- function(x, graph, ...) {
+  if (graph == "base") {
+    par(mfrow = c(1, 1))
+    graphics::plot(x$comparison$delta.e, x$comparison$delta.c,
+                   main = x$comparison$comparison,
+                   xlim = c(min(x$comparison$delta.e, 0), max(x$comparison$delta.e, 0)),
+                   ylim = c(min(x$comparison$delta.c, 0), max(x$comparison$delta.c, 0)),
+                   xlab = "Incremental effectiveness",
+                   ylab = "Incremental costs")
+    if (!is.na(x$interval$interval[1])) graphics::abline(a = 0, b = x$interval$interval[1], lty = 2)
+    if (!is.na(x$interval$interval[2])) graphics::abline(a = 0, b = x$interval$interval[2], lty = 2)
+  } else if (graph == "ggplot2") {
+    if (requireNamespace("ggplot2", quietly = TRUE)) {
+
+    } else {
+      stop("please install ggplot2 or use graph = \"base\"")
+    }
+  } else {
+    stop("graph type ", graph, " not supported")
+  }
 }
 
 #' @describeIn icerui Calculate the ICER uncertainty interval for a BCEA
@@ -113,13 +221,15 @@ confint.psa <- function(object, parm = "ICER", level = 0.95,
 #' Produce a vector or matrix as would typically be produced by a call to
 #' \code{confint.lm} and similar functions.
 #'
-#' @param x       An \code{icerui} object.
+#' @param object  An \code{icerui} object.
+#' @param parm    Should not change from the default ("ICER")
+#' @param level   Required confidence level.
 #' @return        A matrix or vector with columns giving lower and upper
 #'                confidence limits for the ICER and each row giving details
 #'                for an intervention. These will be labelled as (1-level)/2
 #'                and 1 - (1-level)/2 in \% (by default 2.5\% and 97.5\%).
 #' @export
-confint.icerui <- function(x) {
+confint.icerui <- function(object, parm = "ICER", level, ...) {
   stop("not yet implemented")
 }
 
@@ -141,6 +251,7 @@ confint.icerui <- function(x) {
 #'   object).
 #' @param graph   Specify the graphics engine to use.
 #' @param ...     Additional argument(s) for methods.
+#' @importFrom rlang .data
 #' @export
 uiplot <- function(object = NULL, delta.e = NULL, delta.c = NULL, level = 0.95,
                    method = c("fieller", "percentile", "acceptability"),
@@ -179,7 +290,7 @@ uiplot <- function(object = NULL, delta.e = NULL, delta.c = NULL, level = 0.95,
   if (graph == "ggplot2") {
     if (requireNamespace("ggplot2", quietly = TRUE)) {
       p <- ggplot2::ggplot(data.frame(x = delta.e, y = delta.c),
-                           ggplot2::aes(x = e, y = c)) +
+                           ggplot2::aes(x = .data$e, y = .data$c)) +
         ggplot2::geom_point() +
         ggplot2::geom_abline(slope = ui[1], linetype = "dashed") +
         ggplot2::geom_abline(slope = ui[2], linetype = "dashed") +
@@ -207,37 +318,17 @@ uiplot <- function(object = NULL, delta.e = NULL, delta.c = NULL, level = 0.95,
   }
 }
 
-compute_interval <- function(comparison, fun, level) {
-  UseMethod("compute_interval")
-}
-
-compute_interval.multiple_comparison <- function(comparison, fun, level) {
-  stopifnot(inherits(comparison, "multiple_comparison"))
-
-  res <- t(sapply(comparison, function(c) fun(c$delta.e, c$delta.c, level)))
-  rownames(res) <- sapply(comparison, function(c) c$comparison)
-  colnames(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
-
-  res
-}
-
-compute_interval.single_comparison <- function(comparison, fun, level) {
-  stopifnot(inherits(comparison, "single_comparison"))
-
-  res <- fun(comparison$delta.e, comparison$delta.c, level)
-  names(res) <- sprintf("%.1f%%", 100 * c((1 - level) / 2, 1 - (1 - level) / 2))
-
-  res
-}
-
+#' @export
 extract_comparison <- function(object, comparison) {
   UseMethod("extract_comparison")
 }
 
+#' @export
 extract_comparison.default <- function(object, comparison) {
-
+  stop("function not implemented")
 }
 
+#' @export
 extract_comparison.bcea <- function(object, comparison) {
   # If there is only one comparison this will return a single_comparison
   # object. If there is more than one comparison it will return a
@@ -266,7 +357,7 @@ extract_comparison_index.bcea <- function(object, comparison) {
                               "vs.",
                               object$interventions[i]))
     })
-    class(res) <- "multiple_comparison"
+    res <- validate_multiple_comparison(new_multiple_comparison(res))
   } else {
     if (object$n.comparisons > 1) {
       reindex <- which(object$comp == comparison)
@@ -281,7 +372,7 @@ extract_comparison_index.bcea <- function(object, comparison) {
                                      "vs.",
                                      object$interventions[comparison]))
     }
-    class(res) <- "single_comparison"
+    res <- validate_single_comparison(new_single_comparison(res))
   }
   res
 }
@@ -322,7 +413,7 @@ extract_comparison_formula.bcea <- function(object, comparison) {
                               "vs.",
                               name)),
       comp_e, comp_c, comp_names, SIMPLIFY = FALSE)
-    class(res) <- "multiple_comparison"
+    res <- validate_multiple_comparison(new_multiple_comparison(res))
   } else {
     stopifnot(rlang::is_symbol(rhs))
     s_str <- rlang::as_string(rhs)
@@ -330,7 +421,7 @@ extract_comparison_formula.bcea <- function(object, comparison) {
     res <- list(delta.e = int_e - object$e[, which(object$interventions == s_str)],
                 delta.c = int_c - object$c[, which(object$interventions == s_str)],
                 comparison = paste(intervention, "vs.", s_str))
-    class(res) <- "single_comparison"
+    res <- validate_single_comparison(new_single_comparison(res))
   }
 
   res
