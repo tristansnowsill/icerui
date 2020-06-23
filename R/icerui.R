@@ -329,6 +329,41 @@ extract_comparison.default <- function(object, comparison) {
 }
 
 #' @export
+extract_comparison.psa <- function(object, comparison) {
+  stopifnot(inherits(object, "psa"))
+
+  if (is.character(comparison)) {
+    extract_comparison_names.psa(object, comparison)
+  } else if (rlang::is_formula(comparison)) {
+    extract_comparison_formula.psa(object, comparison)
+  } else {
+    stop("cannot extract comparison ", comparison)
+  }
+}
+
+extract_comparison_names.psa <- function(object, comparison) {
+  psa_names <- unique(object$psa$.strategy_names)
+  intervention <- object$model$central_strategy
+  if (length(comparison) > 1) {
+    stopifnot(all(comparison %in% psa_names))
+  } else {
+    stopifnot(comparison %in% psa_names)
+    if (comparison == intervention) stop("cannot specify ", comparison, " as comparator because it is the central_strategy")
+    comparator.c <- with(object$psa, .cost[.strategy_names == comparison])
+    comparator.e <- with(object$psa, .effect[.strategy_names == comparison])
+    intervention.c <- with(object$psa, .cost[.strategy_names == intervention])
+    intervention.e <- with(object$psa, .effect[.strategy_names == intervention])
+    delta.c <- intervention.c - comparator.c
+    delta.e <- intervention.e - comparator.e
+    validate_single_comparison(
+      new_single_comparison(
+        list(delta.e = delta.e,
+             delta.c = delta.c,
+             comparison = paste(intervention, "vs.", comparator))))
+  }
+}
+
+#' @export
 extract_comparison.bcea <- function(object, comparison) {
   # If there is only one comparison this will return a single_comparison
   # object. If there is more than one comparison it will return a
@@ -343,6 +378,8 @@ extract_comparison.bcea <- function(object, comparison) {
     extract_comparison_names.bcea(object, comparison)
   } else if (rlang::is_formula(comparison)) {
     extract_comparison_formula.bcea(object, comparison)
+  } else {
+    stop("cannot extract comparison ", comparison)
   }
 }
 
