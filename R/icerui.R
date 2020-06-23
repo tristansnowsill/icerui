@@ -343,23 +343,35 @@ extract_comparison.psa <- function(object, comparison) {
 
 extract_comparison_names.psa <- function(object, comparison) {
   psa_names <- unique(object$psa$.strategy_names)
-  intervention <- object$model$central_strategy
+  ref <- object$model$central_strategy
   if (length(comparison) > 1) {
     stopifnot(all(comparison %in% psa_names))
+    if (any(comparison == ref)) stop("cannot include ", ref, " in comparison because it is the central_Strategy")
+    ref.c <- with(object$psa, .cost[.strategy_names == ref])
+    ref.e <- with(object$psa, .effect[.strategy_names == ref])
+    validate_multiple_comparison(
+      new_multiple_comparison(
+        lapply(comparison, function(x) {
+          list(delta.e = with(object$psa, .cost[.strategy_names == x]) - ref.e,
+               delta.c = with(object$psa, .effect[.strategy_names == x]) - ref.c,
+               comparison = paste(x, "vs.", ref))
+        })
+      )
+    )
   } else {
     stopifnot(comparison %in% psa_names)
-    if (comparison == intervention) stop("cannot specify ", comparison, " as comparator because it is the central_strategy")
-    comparator.c <- with(object$psa, .cost[.strategy_names == comparison])
-    comparator.e <- with(object$psa, .effect[.strategy_names == comparison])
-    intervention.c <- with(object$psa, .cost[.strategy_names == intervention])
-    intervention.e <- with(object$psa, .effect[.strategy_names == intervention])
-    delta.c <- intervention.c - comparator.c
-    delta.e <- intervention.e - comparator.e
+    if (comparison == ref) stop("cannot specify ", comparison, " as comparator because it is the central_strategy")
+    intervention.c <- with(object$psa, .cost[.strategy_names == comparison])
+    intervention.e <- with(object$psa, .effect[.strategy_names == comparison])
+    ref.c <- with(object$psa, .cost[.strategy_names == ref])
+    ref.e <- with(object$psa, .effect[.strategy_names == ref])
+    delta.c <- intervention.c - ref.c
+    delta.e <- intervention.e - ref.e
     validate_single_comparison(
       new_single_comparison(
         list(delta.e = delta.e,
              delta.c = delta.c,
-             comparison = paste(intervention, "vs.", comparator))))
+             comparison = paste(comparison, "vs.", ref))))
   }
 }
 
