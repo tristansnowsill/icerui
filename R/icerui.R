@@ -352,8 +352,8 @@ extract_comparison_names.psa <- function(object, comparison) {
     validate_multiple_comparison(
       new_multiple_comparison(
         lapply(comparison, function(x) {
-          list(delta.e = with(object$psa, .cost[.strategy_names == x]) - ref.e,
-               delta.c = with(object$psa, .effect[.strategy_names == x]) - ref.c,
+          list(delta.e = with(object$psa, .effect[.strategy_names == x]) - ref.e,
+               delta.c = with(object$psa, .cost[.strategy_names == x]) - ref.c,
                comparison = paste(x, "vs.", ref))
         })
       )
